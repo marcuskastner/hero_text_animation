@@ -21,9 +21,9 @@ content.addEventListener("mousemove", (event) => {
       );
 
       // Map the distance to a scale factor
-      const maxScale = 2;
+      const maxScale = 1.75;
       const minScale = 1;
-      const maxDistance = 60; // Adjust this for effect range
+      const maxDistance = 120; // Adjust this for effect range
       const scale = Math.max(minScale, maxScale - distance / maxDistance);
 
       // Calculate the amount to move the letter down based on scale
