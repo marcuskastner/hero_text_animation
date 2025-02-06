@@ -1,62 +1,139 @@
-const content = document.querySelector(".content");
-const letters = document.querySelectorAll(".letter");
-const anchors = document.querySelectorAll("a");
+const content = document.querySelector("h1");
+const wrapper = document.createElement("div");
+const letters = []
+const words = []
+const cursor = {x: 0, y: 0}
 
-content.addEventListener("mousemove", (event) => {
-  anchors.forEach((anchor) => {
-    let anyLetterScaled = false; // Flag to check if any letter inside this anchor is scaled above 1
+function createLetter(letter) {
+  const span = document.createElement('span')
+  span.innerHTML = letter
+  if (letter === '"&nbsp;"') {
+    span.classList.add('space')
+  } else {
+    span.classList.add('letter')
+  }
+  return span
+}
 
-    // Check all letters inside the current anchor tag
-    const anchorLetters = anchor.querySelectorAll(".letter");
+function createWord(text) {
+  const words = text.split(/\s+/)
+  const filteredWords = words.filter(item => item && item.trim() !== "");
+  const nodes = []
 
-    anchorLetters.forEach((letter) => {
-      const rect = letter.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
+  console.log(filteredWords.length)
+  
+  for (let i = 0; i < filteredWords.length; i++) {
+    if (words[i].length > 0) {
+      const chars = filteredWords[i].split("").map(char => (char === " " ? createLetter("&nbsp;") : createLetter(char)))
+      const word = document.createElement('span')
+      word.classList.add('word')
 
-      // Calculate distance from the mouse pointer
-      const distance = Math.hypot(
-        event.clientX - centerX,
-        event.clientY - centerY
-      );
-
-      // Map the distance to a scale factor
-      const maxScale = 1.75;
-      const minScale = 1;
-      const maxDistance = 120; // Adjust this for effect range
-      const scale = Math.max(minScale, maxScale - distance / maxDistance);
-
-      // Calculate the amount to move the letter down based on scale
-      const scaleDiff = scale - 1;
-      const SCALING_TRANSLATE_CONVERSION_FACTOR = 12;
-      const translateY = scaleDiff * SCALING_TRANSLATE_CONVERSION_FACTOR;
-
-      // Apply both scaling and translation to maintain the bottom position
-      letter.style.transform = `scaleY(${scale}) translateY(${translateY}px)`;
-
-      // If any letter's scale is above 1, set the flag to true
-      if (scale > 1) {
-        anyLetterScaled = true;
+      for (let j = 0; j < chars.length; j++) {
+        word.appendChild(chars[j])
+        letters.push(chars[j])
       }
-    });
 
-    // Change the parent anchor color based on scale
-    if (anyLetterScaled) {
-      anchor.style.color = "hotpink";
-    } else {
-      anchor.style.color = "grey";
+      nodes.push(word)
+  
+      if (i + 1< filteredWords.length) {
+        const whiteSpace = document.createElement('span')
+        whiteSpace.classList.add('space')
+        whiteSpace.innerHTML = "&nbsp;"
+        nodes.push(whiteSpace)
+      }
     }
-  });
-});
+  }
 
-content.addEventListener("mouseleave", () => {
-  letters.forEach((letter) => {
-    // Reset scale and translation to normal when mouse leaves
-    letter.style.transform = "scaleY(1) translateY(0)";
-  });
+  return nodes
+}
 
-  // Reset anchor color to black when mouse leaves
-  anchors.forEach((anchor) => {
-    anchor.style.color = "black";
-  });
-});
+function animate() {
+    for (let i = 0; i < content.children.length; i++) {
+
+      letters.forEach((letter) => {
+        const rect = letter.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+  
+        // Calculate distance from the mouse pointer
+        const distance = Math.hypot(
+          cursor.x - centerX,
+          cursor.y - centerY
+        );
+  
+        // Map the distance to a scale factor
+        const maxScale = 1.9;
+        const minScale = 1;
+        const maxDistance = 120; // Adjust this for effect range
+        const scale = Math.max(minScale, maxScale - distance / maxDistance);
+  
+        // Calculate the amount to move the letter down based on scale
+        const scaleDiff = scale - 1;
+        const SCALING_TRANSLATE_CONVERSION_FACTOR = 12;
+        const translateY = scaleDiff * SCALING_TRANSLATE_CONVERSION_FACTOR;
+  
+        // Apply both scaling and translation to maintain the bottom position
+        letter.style.transform = `scaleY(${scale}) translateY(${translateY}px)`;
+  
+        // If any letter's scale is above 1, set the flag to true
+        if (scale > 1) {
+          anyLetterScaled = true;
+        }
+      });
+    }
+    requestAnimationFrame(animate);
+}
+
+function DomContent() {
+  window.requestAnimationFrame(animate);
+  if (window.location.pathname === '/' || window.location.pathname === '') {
+    if (window.innerWidth > 800) {
+      
+      wrapper.classList.add('wrapper')
+      content.classList.add('hero-header')
+
+      const newContent = content.cloneNode(true)
+      const textWrapper = document.createElement('div')
+
+      textWrapper.classList.add('text-wrapper')
+
+      textWrapper.appendChild(newContent)
+
+      const parent = content.parentNode
+  
+      for (let i = 0; i < newContent.children.length; i++) {
+        if (newContent.children[i].tagName === 'STRONG') {
+          const newChild = document.createElement('strong')
+  
+          words.push(newChild)
+          newChild.classList.add('line')
+  
+          const wordArray = createWord(newContent.children[i].innerHTML)
+
+          console.log(wordArray)
+  
+          for (let j = 0; j < wordArray.length; j++) {
+            newChild.appendChild(wordArray[j])
+          }
+  
+          newContent.replaceChild(newChild, newContent.children[i])
+        }
+      }
+
+      wrapper.appendChild(content)
+      wrapper.appendChild(textWrapper)
+  
+      parent.appendChild(wrapper)
+      
+      content.style.opacity = 0
+     
+      document.addEventListener("mousemove", (event) => {
+        cursor.x = event.clientX
+        cursor.y = event.clientY   
+        }
+      );
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', DomContent)
